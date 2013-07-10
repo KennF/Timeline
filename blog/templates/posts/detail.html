@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block page_header %}
+	<div class="page-header">
+		<h1>{{ post.title }}</h1>
+	</div>
+{% endblock %}
+
+{% block content %}
+	<p>{{post.body}}</p>
+	<p>{{post.create_at.strftime('%H:%M:%Y-%m-%d')}}</p>
+	<hr>
+	<h2>Comments</h2>
+	{% if post.comments %}
+		{% for comment in post.comments %}
+			<h2><a href="{{url_for('posts.detail'), slug=post.slug}}">{{ post.title }}</a></h2>
+			<p>{{ comment.body }}</p>
+			<p><strong>{{comment.auther}}</strong><small>on {{ comment.create_at.strftime('%H:%M:%Y-%m-%d')}} </small></p>
+			{{ comment.text}}
+		{% endfor %}
+	{% endif %}
+
+	
+{% endblock %}
