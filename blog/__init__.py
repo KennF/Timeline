@@ -10,7 +10,10 @@ def register_blueprint(app):
 	from blog.views import posts
 	app.register_blueprint(posts)
 
+print "register blueprint"
 register_blueprint(app)
+
+
 
 if __name__ == '__main__':
     app.run()
