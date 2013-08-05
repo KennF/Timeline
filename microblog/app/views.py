@@ -54,7 +54,7 @@ def after_login(resp):
         nickname = resp.nickname
         if nickname is None or nickname == "":
             nickname = resp.email.split("@")[0]
-
+        nickname = User.make_unique_nickname(nickname)
         user = User(nickname = nickname, email = resp.email, role = ROLE_USER)
         db.session.add(user)
         db.session.commit()
@@ -92,7 +92,7 @@ def user(nickname):
 def edit():
     # if g.user is None or not g.user.is_authenticated():
     #     return redirect(url_for('index'))
-    form = EditForm()
+    form = EditForm(nickname = g.user.nickname)
     if form.validate_on_submit():
         g.user.nickname = form.nickname.data
         g.user.email = form.email.data
@@ -107,3 +107,11 @@ def edit():
         form.about_me.data = g.user.about_me
 
     return render_template('edit.html', form = form)
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html'), 500
