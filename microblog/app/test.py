@@ -1,8 +1,10 @@
 import unittest
 import os
+from datetime import datetime, timedelta
 from config import basedir
 from app import app, db
-from app.models import User
+from app.models import User, Post
+
 
 class TestCase(unittest.TestCase):
     def setUp(self):
@@ -16,24 +18,24 @@ class TestCase(unittest.TestCase):
         db.session.remove()
         db.drop_all()
 
-    # def test_avatar(self):
-    #     u = User(nickname = 'john', email = 'john@example.com')
-    #     avatar = u.avatar(128)
-    #     expected = 'http://www.gravatar.com/avatar/d4c74594d841139328695756648b6bd6'
-    #     assert avatar[0:len(expected)] == expected
+    def test_avatar(self):
+        u = User(nickname = 'john', email = 'john@example.com')
+        avatar = u.avatar(128)
+        expected = 'http://www.gravatar.com/avatar/d4c74594d841139328695756648b6bd6'
+        assert avatar[0:len(expected)] == expected
 
-    # def test_make_unique_nickname(self):
-    #     u = User(nickname = 'john', email = 'john@example.com')
-    #     db.session.add(u)
-    #     db.session.commit()
-    #     nickname = User.make_unique_nickname('john')
-    #     assert nickname != 'john'
-    #     u = User(nickname = nickname, email = 'test@example.com')
-    #     db.session.add(u)
-    #     db.session.commit()
-    #     nickname2 = User.make_unique_nickname('john')
-    #     assert nickname2 != 'john'
-    #     assert nickname2 != nickname
+    def test_make_unique_nickname(self):
+        u = User(nickname = 'john', email = 'john@example.com')
+        db.session.add(u)
+        db.session.commit()
+        nickname = User.make_unique_nickname('john')
+        assert nickname != 'john'
+        u = User(nickname = nickname, email = 'test@example.com')
+        db.session.add(u)
+        db.session.commit()
+        nickname2 = User.make_unique_nickname('john')
+        assert nickname2 != 'john'
+        assert nickname2 != nickname
 
     def test_follow(self):
         u1 = User(nickname = 'john', email = 'john@example.com')
@@ -63,6 +65,52 @@ class TestCase(unittest.TestCase):
         assert u1.is_following(u2) == False
         assert u1.followed.count() == 0
         assert u2.followers.count() == 0
+
+    def test_follow_posts(self):
+        u1 = User(nickname='john', email='john@mail.com')
+        u2 = User(nickname='susan', email='susan@mail.com')
+        u3 = User(nickname='mike', email='mike@mail.com')
+        u4 = User(nickname='david', email='david@mail.com')
+        db.session.add(u1)
+        db.session.add(u2)
+        db.session.add(u3)
+        db.session.add(u4)
+        utcnow = datetime.utcnow()
+        p1 = Post(body='Post from john', user=u1, timestamp= utcnow + timedelta(seconds = 1))
+        p2 = Post(body='Post from susan', user=u2, timestamp= utcnow + timedelta(seconds = 2))
+        p3 = Post(body='Post from mike', user=u3, timestamp= utcnow + timedelta(seconds = 3))
+        p4 = Post(body='Post from david', user=u4, timestamp= utcnow + timedelta(seconds = 4))
+        db.session.add(p1)
+        db.session.add(p2)
+        db.session.add(p3)
+        db.session.add(p4)
+        db.session.commit()
+
+        u1.follow(u1)
+        u1.follow(u2)
+        u1.follow(u3)
+        u1.follow(u4)
+        u2.follow(u2)
+        u2.follow(u1)
+        u2.follow(u4)
+        u3.follow(u3)
+        u4.follow(u4)
+        db.session.add(u1)
+        db.session.add(u2)
+        db.session.add(u3)
+        db.session.add(u4)
+        db.session.commit()
+        assert u1.is_following(u1) == True
+        assert u1.is_following(u2) == True
+        assert u1.is_following(u3) == True
+        assert u1.is_following(u4) == True
+
+        f1 = u1.followed_posts().all()
+        f2 = u2.followed_posts().all()
+        assert len(f1) == 4
+        assert len(f2) == 3
+        assert f1 == [p4, p3, p2, p1]
+        assert f2 == [p4, p2, p1]
 
 if __name__ == '__main__':
     unittest.main()

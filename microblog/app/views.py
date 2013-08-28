@@ -2,25 +2,32 @@ from datetime import datetime
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from app import app, db, lm, oid
-from forms import LoginForm, EditForm
-from models import User, ROLE_USER, ROLE_ADMIN
+from forms import LoginForm, EditForm, PostForm
+from models import User, ROLE_USER, ROLE_ADMIN, Post
 
-@app.route('/')
-@app.route('/index')
+@app.route('/', methods = ['GET', 'POST'])
+@app.route('/index', methods = ['GET', 'POST'])
 @login_required
 def index():
-    user = g.user
-    posts = [
-        {
-            'author' : { 'nickname' : 'John' },
-            'body' : 'Beautiful day in Portland!'
-        },
-        {
-            'author' : { 'nickname' : 'Susan' },
-            'body' : 'The Avergers movie was so cool!'
-        }
-    ]
-    return render_template("index.html", title = "Home", user = user, posts = posts)
+    form = PostForm()
+    if form.validate_on_submit():
+        post = Post(body = form.post.data, timestamp = datetime.utcnow(), author = g.user)
+        db.session.add(post)
+        db.session.commit()
+        flash('You gave a post!')
+    # posts = [
+    #     {
+    #         'author' : { 'nickname' : 'John' },
+    #         'body' : 'Beautiful day in Portland!'
+    #     },
+    #     {
+    #         'author' : { 'nickname' : 'Susan' },
+    #         'body' : 'The Avergers movie was so cool!'
+    #     }
+    # ]
+    posts = g.user.followed_posts().all()
+
+    return render_template("index.html", title = "Home", form=form, posts = posts)
 
 @app.before_request
 def before_request():
@@ -58,6 +65,9 @@ def after_login(resp):
         user = User(nickname = nickname, email = resp.email, role = ROLE_USER)
         db.session.add(user)
         db.session.commit()
+        # make self as followed
+        db.session.add(user.follow(user))
+        db.session.commit()
     remember_me = False
     if 'remember_me' in session:
         remember_me = session['remember_me']
@@ -81,10 +91,11 @@ def user(nickname):
     if user == None:
         flash("User {0} doesn't exist!" % nickname)
         return redirect(url_for('index'))
-    posts = [
-    {'auther': user, 'body' : 'Test post #1' },
-    {'auther': user, 'body' : 'Test post #2' }
-    ]
+    # posts = [
+    # {'auther': user, 'body' : 'Test post #1' },
+    # {'auther': user, 'body' : 'Test post #2' }
+    # ]
+    posts = user.followed_posts().all()
     return render_template('user.html', user=user, posts = posts)
 
 @app.route('/edit', methods = ['GET', 'POST'])
@@ -107,6 +118,44 @@ def edit():
         form.about_me.data = g.user.about_me
 
     return render_template('edit.html', form = form)
+
+@app.route('/follow/<nickname>')
+def follow(nickname):
+    user = User.query.filter_by(nickname = nickname).first()
+    if user == None:
+        flash('User {0} not found'.format(user))
+        return redirect(url_for('index')) 
+    if user == g.user:
+        flash('You cannot follow yourself')
+        return redirect(url_for('user', nickname = user.nickname)) 
+    u = g.user.follow(user)
+    if u == None:
+        flash('You cannot follow {0}'.format(nickname))
+        return redirect(url_for('user', nickname = user.nickname)) 
+    db.session.add(u)
+    db.session.commit()
+    flash('You are following {0}'.format(nickname))
+    redirect(url_for('user', nickname=u.nickname))
+
+@app.route('/unfollow/<nickname>')
+def unfollow(nickname):
+    user = User.query.filter_by(nickname = nickname).first()
+    if user == None:
+        flash('User {0} not found'.format(user))
+        return redirect(url_for('index')) 
+    if user == g.user:
+        flash('You cannot unfollow yourself')
+        return redirect(url_for('user', nickname = user.nickname)) 
+    u = g.user.unfollow(user)
+    if u == None:
+        flash('You cannot unfollow {0}'.format(nickname))
+        return redirect(url_for('user', nickname = user.nickname)) 
+    db.session.add(u)
+    db.session.commit()
+    flash('You are following {0}'.format(nickname))
+    redirect(url_for('user', nickname=u.nickname))
+
+
 
 @app.errorhandler(404)
 def page_not_found(error):

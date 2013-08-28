@@ -15,7 +15,7 @@ class User(db.Model):
 	nickname = db.Column(db.String(64), index = True, unique = True)
 	email = db.Column(db.String(120), index = True, unique = True)
 	role = db.Column(db.SmallInteger, default = ROLE_USER)
-	posts = db.relationship('Post', backref = 'user', lazy = 'dynamic')
+	posts = db.relationship('Post', backref = 'author', lazy = 'dynamic')
 	about_me = db.Column(db.String(140))
 	last_seen = db.Column(db.DateTime)
 	followed = db.relationship('User',
@@ -67,6 +67,10 @@ class User(db.Model):
 
 	def is_following(self, user):
 		return self.followed.filter(followers.c.followed_id == user.id).count() > 0
+
+	def followed_posts(self):
+		return Post.query.join(followers, (followers.c.followed_id == Post.user_id)).filter(
+			followers.c.follower_id == self.id).order_by(Post.timestamp.desc())
 
 
 class Post(db.Model):
