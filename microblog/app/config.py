@@ -23,3 +23,7 @@ MAIL_USERNAME = None
 MAIL_PASSWORD = None
 
 ADMINS = ['cactus.fxy@gmail.com']
+
+# pagination
+POSTS_PER_PAGE = 3
+
