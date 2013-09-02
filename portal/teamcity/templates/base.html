@@ -1,12 +1,23 @@
+<!DOCTYPE html>
+<meta charset="UTF-8"/>
 <html>
 	<head>
-		{% if title %}
-			<title>{{title}} - Portal</title>
-		{% else %}
-			<title>Welcome to Portal</title>
-		{% endif %}
+		<title>Welcome to Portal</title>
 	</head>
 	<body>
+		<form action="">
+			<select name="service">
+				<option value="rah" selected>Corridor Optimization</option>
+				<option value="drainage">Drainage</option>
+				<option value="documentation">Documentation</option>
+				<option value="translation">Translation</option>
+			</select>
+		</form>
+		<ul>
+			<li>TeamCity</li>
+			<li>Monitor</li>
+			<li></li>
+		</ul>
         {% block content %} {% endblock %}
     </body>
 </html>

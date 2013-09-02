@@ -2,10 +2,10 @@ from teamcity import app
 from flask import render_template, flash, redirect, session, url_for, request, g
 
 @app.route('/')
-@app.route('/index/')
+@app.route('/index')
 def index():
-	app.logger.debug('A value for debugging')
-    return render_template('base.html')
+    app.logger.debug('A value for debugging')
+    return render_template('index.html')
 
 
 @app.errorhandler(404)
