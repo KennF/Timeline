@@ -3,21 +3,29 @@
 <html>
 	<head>
 		<title>Welcome to Portal</title>
+		<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-1.10.2.js') }}"></script>
+		<script type="text/javascript" src="{{ url_for('static', filename='js/base.js') }}"></script>
 	</head>
 	<body>
-		<form action="">
-			<select name="service">
+		<header>
+			<h2>Continuous Delivery Portal Site</h2>
+		</header>
+		<nav>
+			<ul>
+				<li>TeamCity</li>
+				<li>Monitor</li>
+			</ul>
+		</nav>
+		<aside>
+			<select id="services" name="service">
 				<option value="rah" selected>Corridor Optimization</option>
 				<option value="drainage">Drainage</option>
 				<option value="documentation">Documentation</option>
 				<option value="translation">Translation</option>
 			</select>
-		</form>
-		<ul>
-			<li>TeamCity</li>
-			<li>Monitor</li>
-			<li></li>
-		</ul>
-        {% block content %} {% endblock %}
+		</aside>
+		<article>
+			{% block content %} {% endblock %}
+		</article>
     </body>
 </html>
